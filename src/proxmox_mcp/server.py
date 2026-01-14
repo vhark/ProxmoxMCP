@@ -37,6 +37,10 @@ from .tools.definitions import (
     GET_NODE_STATUS_DESC,
     GET_VMS_DESC,
     EXECUTE_VM_COMMAND_DESC,
+    VM_SNAPSHOT_LIST_DESC,
+    VM_SNAPSHOT_CREATE_DESC,
+    VM_SNAPSHOT_ROLLBACK_DESC,
+    VM_SNAPSHOT_DELETE_DESC,
     GET_CONTAINERS_DESC,
     GET_STORAGE_DESC,
     GET_CLUSTER_STATUS_DESC
@@ -104,6 +108,39 @@ class ProxmoxMCPServer:
             command: Annotated[str, Field(description="Shell command to run (e.g. 'uname -a', 'systemctl status nginx')")]
         ):
             return await self.vm_tools.execute_command(node, vmid, command)
+
+        @self.mcp.tool(description=VM_SNAPSHOT_LIST_DESC)
+        def list_vm_snapshots(
+            node: Annotated[str, Field(description="Host node name (e.g. 'pve1', 'proxmox-node2')")],
+            vmid: Annotated[str, Field(description="VM ID number (e.g. '100', '101')")]
+        ):
+            return self.vm_tools.list_snapshots(node, vmid)
+
+        @self.mcp.tool(description=VM_SNAPSHOT_CREATE_DESC)
+        def create_vm_snapshot(
+            node: Annotated[str, Field(description="Host node name (e.g. 'pve1', 'proxmox-node2')")],
+            vmid: Annotated[str, Field(description="VM ID number (e.g. '100', '101')")],
+            name: Annotated[str, Field(description="Snapshot name")],
+            include_memory: Annotated[bool, Field(description="Include VM memory state", default=False)] = False,
+            description: Annotated[Optional[str], Field(description="Optional description", default=None)] = None,
+        ):
+            return self.vm_tools.create_snapshot(node, vmid, name, include_memory, description)
+
+        @self.mcp.tool(description=VM_SNAPSHOT_ROLLBACK_DESC)
+        def rollback_vm_snapshot(
+            node: Annotated[str, Field(description="Host node name (e.g. 'pve1', 'proxmox-node2')")],
+            vmid: Annotated[str, Field(description="VM ID number (e.g. '100', '101')")],
+            name: Annotated[str, Field(description="Snapshot name")],
+        ):
+            return self.vm_tools.rollback_snapshot(node, vmid, name)
+
+        @self.mcp.tool(description=VM_SNAPSHOT_DELETE_DESC)
+        def delete_vm_snapshot(
+            node: Annotated[str, Field(description="Host node name (e.g. 'pve1', 'proxmox-node2')")],
+            vmid: Annotated[str, Field(description="VM ID number (e.g. '100', '101')")],
+            name: Annotated[str, Field(description="Snapshot name")],
+        ):
+            return self.vm_tools.delete_snapshot(node, vmid, name)
 
         # Storage tools
         @self.mcp.tool(description=GET_STORAGE_DESC)

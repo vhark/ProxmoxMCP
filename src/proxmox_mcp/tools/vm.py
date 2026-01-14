@@ -13,7 +13,8 @@ This module provides tools for managing and interacting with Proxmox VMs:
 The tools implement fallback mechanisms for scenarios where
 detailed VM information might be temporarily unavailable.
 """
-from typing import List
+from typing import List, Optional
+from datetime import datetime
 from mcp.types import TextContent as Content
 from .base import ProxmoxTool
 from .definitions import GET_VMS_DESC, EXECUTE_VM_COMMAND_DESC
@@ -110,6 +111,56 @@ class VMTools(ProxmoxTool):
             return self._format_response(result, "vms")
         except Exception as e:
             self._handle_error("get VMs", e)
+
+    def list_snapshots(self, node: str, vmid: str) -> List[Content]:
+        """List snapshots for a VM."""
+        try:
+            snapshots = self.proxmox.nodes(node).qemu(vmid).snapshot.get()
+            lines = [f"Snapshots for VM {vmid} on {node}:"]
+            for snap in snapshots:
+                name = snap.get("name", "unknown")
+                snaptime = snap.get("snaptime")
+                created = datetime.fromtimestamp(snaptime).isoformat() if snaptime else "unknown"
+                lines.append(f"- {name} (created: {created})")
+            return [Content(type="text", text="\n".join(lines))]
+        except Exception as e:
+            self._handle_error(f"list snapshots for VM {vmid}", e)
+
+    def create_snapshot(
+        self,
+        node: str,
+        vmid: str,
+        name: str,
+        include_memory: bool = False,
+        description: Optional[str] = None,
+    ) -> List[Content]:
+        """Create a VM snapshot."""
+        try:
+            payload = {"snapname": name}
+            if description:
+                payload["description"] = description
+            if include_memory:
+                payload["vmstate"] = 1
+            self.proxmox.nodes(node).qemu(vmid).snapshot.post(**payload)
+            return [Content(type="text", text=f"Snapshot created: {name} for VM {vmid} on {node}")]
+        except Exception as e:
+            self._handle_error(f"create snapshot {name} for VM {vmid}", e)
+
+    def rollback_snapshot(self, node: str, vmid: str, name: str) -> List[Content]:
+        """Rollback a VM snapshot."""
+        try:
+            self.proxmox.nodes(node).qemu(vmid).snapshot(name).rollback.post()
+            return [Content(type="text", text=f"Snapshot rollback started: {name} for VM {vmid} on {node}")]
+        except Exception as e:
+            self._handle_error(f"rollback snapshot {name} for VM {vmid}", e)
+
+    def delete_snapshot(self, node: str, vmid: str, name: str) -> List[Content]:
+        """Delete a VM snapshot."""
+        try:
+            self.proxmox.nodes(node).qemu(vmid).snapshot(name).delete()
+            return [Content(type="text", text=f"Snapshot deleted: {name} for VM {vmid} on {node}")]
+        except Exception as e:
+            self._handle_error(f"delete snapshot {name} for VM {vmid}", e)
 
     async def execute_command(self, node: str, vmid: str, command: str) -> List[Content]:
         """Execute a command in a VM via QEMU guest agent.

@@ -32,6 +32,47 @@ command* - Shell command to run (e.g. 'uname -a')
 Example:
 {"success": true, "output": "Linux vm1 5.4.0", "exit_code": 0}"""
 
+VM_SNAPSHOT_LIST_DESC = """List snapshots for a VM.
+
+Parameters:
+node* - Host node name (e.g. 'pve1')
+vmid* - VM ID number (e.g. '100')
+
+Example:
+{"name": "pre-change/20260114-0430/nginx-upgrade", "created": "2026-01-14T04:30:00"}"""
+
+VM_SNAPSHOT_CREATE_DESC = """Create a snapshot for a VM.
+
+Parameters:
+node* - Host node name (e.g. 'pve1')
+vmid* - VM ID number (e.g. '100')
+name* - Snapshot name
+include_memory - Include VM memory state (default false)
+description - Optional description
+
+Example:
+{"success": true, "snapshot": "pre-change/20260114-0430/nginx-upgrade"}"""
+
+VM_SNAPSHOT_ROLLBACK_DESC = """Rollback a VM to a snapshot.
+
+Parameters:
+node* - Host node name (e.g. 'pve1')
+vmid* - VM ID number (e.g. '100')
+name* - Snapshot name
+
+Example:
+{"success": true, "snapshot": "pre-change/20260114-0430/nginx-upgrade"}"""
+
+VM_SNAPSHOT_DELETE_DESC = """Delete a VM snapshot.
+
+Parameters:
+node* - Host node name (e.g. 'pve1')
+vmid* - VM ID number (e.g. '100')
+name* - Snapshot name
+
+Example:
+{"success": true, "snapshot": "pre-change/20260114-0430/nginx-upgrade"}"""
+
 # Container tool descriptions
 GET_CONTAINERS_DESC = """List all LXC containers across the cluster with their status and configuration.
 
