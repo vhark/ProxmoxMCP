@@ -131,7 +131,12 @@ def main() -> int:
         if not node:
             continue
 
-        snapshots = proxmox.nodes(node).qemu(vmid).snapshot.get()
+        try:
+            snapshots = proxmox.nodes(node).qemu(vmid).snapshot.get()
+        except Exception as exc:
+            print(f"[warn] skipping vmid {vmid} on {node}: {exc}")
+            continue
+
         grouped = filter_snapshots(snapshots)
 
         for cadence in cadences_to_create:
