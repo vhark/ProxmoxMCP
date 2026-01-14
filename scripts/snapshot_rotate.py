@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import os
 import sys
 from datetime import datetime, timedelta, UTC
 from proxmoxer import ProxmoxAPI
@@ -48,8 +49,8 @@ def parse_snapshot_timestamp(name: str) -> datetime | None:
         cadence = parts[1]
         stamp = "-".join(parts[2:])
         if cadence == "hourly":
-            return datetime.strptime(stamp, "%Y%m%d-%H%M")
-        return datetime.strptime(stamp, "%Y%m%d")
+            return datetime.strptime(stamp, "%Y%m%d-%H%M").replace(tzinfo=UTC)
+        return datetime.strptime(stamp, "%Y%m%d").replace(tzinfo=UTC)
     except Exception:
         return None
 
@@ -130,7 +131,14 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Proxmox snapshot rotation")
     parser.add_argument("--config", required=True)
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--log-file", default="/path/to/proxmox-mcp/logs/snapshot_rotate.log")
     args = parser.parse_args()
+
+    log_path = args.log_file
+    os.makedirs(os.path.dirname(log_path), exist_ok=True)
+    log_handle = open(log_path, "a", encoding="utf-8")
+    timestamp = datetime.now(UTC).isoformat()
+    log_handle.write(f"\n[{timestamp}] snapshot rotation start\n")
 
     config = load_config(args.config)
     proxmox = connect_proxmox(config)
@@ -145,7 +153,9 @@ def main() -> int:
             continue
         kind = vm.get("type") or "qemu"
         if kind not in ("qemu", "lxc"):
-            print(f"[warn] skipping unsupported type {kind} vmid {vm.get('vmid')}")
+            msg = f"[warn] skipping unsupported type {kind} vmid {vm.get('vmid')}"
+            print(msg)
+            log_handle.write(msg + "\n")
             continue
         vmid = str(vm.get("vmid"))
         node = vm.get("node")
@@ -158,17 +168,22 @@ def main() -> int:
             else:
                 snapshots = proxmox.nodes(node).qemu(vmid).snapshot.get()
         except Exception as exc:
-            print(f"[warn] skipping {kind} vmid {vmid} on {node}: {exc}")
+            msg = f"[warn] skipping {kind} vmid {vmid} on {node}: {exc}"
+            print(msg)
+            log_handle.write(msg + "\n")
             continue
 
         grouped = filter_snapshots(snapshots)
 
         for cadence in cadences_to_create:
             create_snapshot(proxmox, node, vmid, cadence, args.dry_run, kind)
+            log_handle.write(f"created {kind} {vmid} {cadence}\n")
 
         for cadence, snaps in grouped.items():
             prune_snapshots(proxmox, node, vmid, snaps, cutoffs[cadence], args.dry_run, kind)
 
+    log_handle.write(f"[{datetime.now(UTC).isoformat()}] snapshot rotation end\n")
+    log_handle.close()
     return 0
 
 
