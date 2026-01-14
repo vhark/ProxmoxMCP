@@ -41,6 +41,10 @@ from .tools.definitions import (
     VM_SNAPSHOT_CREATE_DESC,
     VM_SNAPSHOT_ROLLBACK_DESC,
     VM_SNAPSHOT_DELETE_DESC,
+    LXC_SNAPSHOT_LIST_DESC,
+    LXC_SNAPSHOT_CREATE_DESC,
+    LXC_SNAPSHOT_ROLLBACK_DESC,
+    LXC_SNAPSHOT_DELETE_DESC,
     GET_CONTAINERS_DESC,
     GET_STORAGE_DESC,
     GET_CLUSTER_STATUS_DESC
@@ -141,6 +145,37 @@ class ProxmoxMCPServer:
             name: Annotated[str, Field(description="Snapshot name")],
         ):
             return self.vm_tools.delete_snapshot(node, vmid, name)
+
+        @self.mcp.tool(description=LXC_SNAPSHOT_LIST_DESC)
+        def list_lxc_snapshots(
+            node: Annotated[str, Field(description="Host node name (e.g. 'pve1', 'proxmox-node2')")],
+            vmid: Annotated[str, Field(description="Container ID number (e.g. '100')")],
+        ):
+            return self.vm_tools.list_lxc_snapshots(node, vmid)
+
+        @self.mcp.tool(description=LXC_SNAPSHOT_CREATE_DESC)
+        def create_lxc_snapshot(
+            node: Annotated[str, Field(description="Host node name (e.g. 'pve1', 'proxmox-node2')")],
+            vmid: Annotated[str, Field(description="Container ID number (e.g. '100')")],
+            name: Annotated[str, Field(description="Snapshot name")],
+        ):
+            return self.vm_tools.create_lxc_snapshot(node, vmid, name)
+
+        @self.mcp.tool(description=LXC_SNAPSHOT_ROLLBACK_DESC)
+        def rollback_lxc_snapshot(
+            node: Annotated[str, Field(description="Host node name (e.g. 'pve1', 'proxmox-node2')")],
+            vmid: Annotated[str, Field(description="Container ID number (e.g. '100')")],
+            name: Annotated[str, Field(description="Snapshot name")],
+        ):
+            return self.vm_tools.rollback_lxc_snapshot(node, vmid, name)
+
+        @self.mcp.tool(description=LXC_SNAPSHOT_DELETE_DESC)
+        def delete_lxc_snapshot(
+            node: Annotated[str, Field(description="Host node name (e.g. 'pve1', 'proxmox-node2')")],
+            vmid: Annotated[str, Field(description="Container ID number (e.g. '100')")],
+            name: Annotated[str, Field(description="Snapshot name")],
+        ):
+            return self.vm_tools.delete_lxc_snapshot(node, vmid, name)
 
         # Storage tools
         @self.mcp.tool(description=GET_STORAGE_DESC)

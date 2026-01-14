@@ -162,6 +162,44 @@ class VMTools(ProxmoxTool):
         except Exception as e:
             self._handle_error(f"delete snapshot {name} for VM {vmid}", e)
 
+    def list_lxc_snapshots(self, node: str, vmid: str) -> List[Content]:
+        """List snapshots for an LXC container."""
+        try:
+            snapshots = self.proxmox.nodes(node).lxc(vmid).snapshot.get()
+            lines = [f"Snapshots for LXC {vmid} on {node}:"]
+            for snap in snapshots:
+                name = snap.get("name", "unknown")
+                snaptime = snap.get("snaptime")
+                created = datetime.fromtimestamp(snaptime).isoformat() if snaptime else "unknown"
+                lines.append(f"- {name} (created: {created})")
+            return [Content(type="text", text="\n".join(lines))]
+        except Exception as e:
+            self._handle_error(f"list snapshots for LXC {vmid}", e)
+
+    def create_lxc_snapshot(self, node: str, vmid: str, name: str) -> List[Content]:
+        """Create an LXC snapshot."""
+        try:
+            self.proxmox.nodes(node).lxc(vmid).snapshot.post(snapname=name)
+            return [Content(type="text", text=f"Snapshot created: {name} for LXC {vmid} on {node}")]
+        except Exception as e:
+            self._handle_error(f"create snapshot {name} for LXC {vmid}", e)
+
+    def rollback_lxc_snapshot(self, node: str, vmid: str, name: str) -> List[Content]:
+        """Rollback an LXC snapshot."""
+        try:
+            self.proxmox.nodes(node).lxc(vmid).snapshot(name).rollback.post()
+            return [Content(type="text", text=f"Snapshot rollback started: {name} for LXC {vmid} on {node}")]
+        except Exception as e:
+            self._handle_error(f"rollback snapshot {name} for LXC {vmid}", e)
+
+    def delete_lxc_snapshot(self, node: str, vmid: str, name: str) -> List[Content]:
+        """Delete an LXC snapshot."""
+        try:
+            self.proxmox.nodes(node).lxc(vmid).snapshot(name).delete()
+            return [Content(type="text", text=f"Snapshot deleted: {name} for LXC {vmid} on {node}")]
+        except Exception as e:
+            self._handle_error(f"delete snapshot {name} for LXC {vmid}", e)
+
     async def execute_command(self, node: str, vmid: str, command: str) -> List[Content]:
         """Execute a command in a VM via QEMU guest agent.
 

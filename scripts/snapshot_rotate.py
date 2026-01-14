@@ -89,7 +89,15 @@ def filter_snapshots(snapshots: list[dict]) -> dict[str, list[dict]]:
     return grouped
 
 
-def prune_snapshots(proxmox: ProxmoxAPI, node: str, vmid: str, snapshots: list[dict], cutoff: datetime, dry_run: bool) -> None:
+def prune_snapshots(
+    proxmox: ProxmoxAPI,
+    node: str,
+    vmid: str,
+    snapshots: list[dict],
+    cutoff: datetime,
+    dry_run: bool,
+    kind: str,
+) -> None:
     for snap in snapshots:
         name = snap.get("name", "")
         ts = parse_snapshot_timestamp(name)
@@ -97,19 +105,25 @@ def prune_snapshots(proxmox: ProxmoxAPI, node: str, vmid: str, snapshots: list[d
             continue
         if ts < cutoff:
             if dry_run:
-                print(f"[dry-run] delete {vmid}@{name}")
+                print(f"[dry-run] delete {kind} {vmid}@{name}")
             else:
-                proxmox.nodes(node).qemu(vmid).snapshot(name).delete()
-                print(f"Deleted {vmid}@{name}")
+                if kind == "lxc":
+                    proxmox.nodes(node).lxc(vmid).snapshot(name).delete()
+                else:
+                    proxmox.nodes(node).qemu(vmid).snapshot(name).delete()
+                print(f"Deleted {kind} {vmid}@{name}")
 
 
-def create_snapshot(proxmox: ProxmoxAPI, node: str, vmid: str, cadence: str, dry_run: bool) -> None:
+def create_snapshot(proxmox: ProxmoxAPI, node: str, vmid: str, cadence: str, dry_run: bool, kind: str) -> None:
     name = tag_snapshot_name(cadence)
     if dry_run:
-        print(f"[dry-run] create {vmid}@{name}")
+        print(f"[dry-run] create {kind} {vmid}@{name}")
         return
-    proxmox.nodes(node).qemu(vmid).snapshot.post(snapname=name)
-    print(f"Created {vmid}@{name}")
+    if kind == "lxc":
+        proxmox.nodes(node).lxc(vmid).snapshot.post(snapname=name)
+    else:
+        proxmox.nodes(node).qemu(vmid).snapshot.post(snapname=name)
+    print(f"Created {kind} {vmid}@{name}")
 
 
 def main() -> int:
@@ -129,8 +143,9 @@ def main() -> int:
     for vm in vms:
         if vm.get("template"):
             continue
-        if vm.get("type") and vm.get("type") != "qemu":
-            print(f"[warn] skipping non-QEMU vmid {vm.get('vmid')} type {vm.get('type')}")
+        kind = vm.get("type") or "qemu"
+        if kind not in ("qemu", "lxc"):
+            print(f"[warn] skipping unsupported type {kind} vmid {vm.get('vmid')}")
             continue
         vmid = str(vm.get("vmid"))
         node = vm.get("node")
@@ -138,18 +153,21 @@ def main() -> int:
             continue
 
         try:
-            snapshots = proxmox.nodes(node).qemu(vmid).snapshot.get()
+            if kind == "lxc":
+                snapshots = proxmox.nodes(node).lxc(vmid).snapshot.get()
+            else:
+                snapshots = proxmox.nodes(node).qemu(vmid).snapshot.get()
         except Exception as exc:
-            print(f"[warn] skipping vmid {vmid} on {node}: {exc}")
+            print(f"[warn] skipping {kind} vmid {vmid} on {node}: {exc}")
             continue
 
         grouped = filter_snapshots(snapshots)
 
         for cadence in cadences_to_create:
-            create_snapshot(proxmox, node, vmid, cadence, args.dry_run)
+            create_snapshot(proxmox, node, vmid, cadence, args.dry_run, kind)
 
         for cadence, snaps in grouped.items():
-            prune_snapshots(proxmox, node, vmid, snaps, cutoffs[cadence], args.dry_run)
+            prune_snapshots(proxmox, node, vmid, snaps, cutoffs[cadence], args.dry_run, kind)
 
     return 0
 

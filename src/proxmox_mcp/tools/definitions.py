@@ -73,6 +73,45 @@ name* - Snapshot name
 Example:
 {"success": true, "snapshot": "pre-change/20260114-0430/nginx-upgrade"}"""
 
+LXC_SNAPSHOT_LIST_DESC = """List snapshots for an LXC container.
+
+Parameters:
+node* - Host node name (e.g. 'pve1')
+vmid* - Container ID number (e.g. '100')
+
+Example:
+{"name": "auto-hourly-20260114-0549", "created": "2026-01-14T05:49:00"}"""
+
+LXC_SNAPSHOT_CREATE_DESC = """Create a snapshot for an LXC container.
+
+Parameters:
+node* - Host node name (e.g. 'pve1')
+vmid* - Container ID number (e.g. '100')
+name* - Snapshot name
+
+Example:
+{"success": true, "snapshot": "auto-hourly-20260114-0549"}"""
+
+LXC_SNAPSHOT_ROLLBACK_DESC = """Rollback an LXC container to a snapshot.
+
+Parameters:
+node* - Host node name (e.g. 'pve1')
+vmid* - Container ID number (e.g. '100')
+name* - Snapshot name
+
+Example:
+{"success": true, "snapshot": "auto-hourly-20260114-0549"}"""
+
+LXC_SNAPSHOT_DELETE_DESC = """Delete an LXC snapshot.
+
+Parameters:
+node* - Host node name (e.g. 'pve1')
+vmid* - Container ID number (e.g. '100')
+name* - Snapshot name
+
+Example:
+{"success": true, "snapshot": "auto-hourly-20260114-0549"}"""
+
 # Container tool descriptions
 GET_CONTAINERS_DESC = """List all LXC containers across the cluster with their status and configuration.
 
