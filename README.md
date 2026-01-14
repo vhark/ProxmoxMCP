@@ -23,6 +23,7 @@ A Python-based Model Context Protocol (MCP) server for interacting with Proxmox 
 - 🎨 Rich output formatting with customizable themes
 - 🧊 VM + LXC snapshot tools (create/list/rollback/delete)
 - 🔁 Snapshot rotation script with retention (hourly/daily/weekly/monthly)
+- 📦 LXC snapshot support for containers (e.g., Yunohost)
 
 
 
