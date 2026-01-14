@@ -131,7 +131,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Proxmox snapshot rotation")
     parser.add_argument("--config", required=True)
     parser.add_argument("--dry-run", action="store_true")
-    parser.add_argument("--log-file", default="/path/to/proxmox-mcp/logs/snapshot_rotate.log")
+    parser.add_argument("--log-file", default="./logs/snapshot_rotate.log")
     args = parser.parse_args()
 
     log_path = args.log_file

@@ -36,14 +36,14 @@ https://github.com/user-attachments/assets/1b5f42f7-85d5-4918-aca4-d38413b0e82b
 ### Snapshot Rotation
 
 ```bash
-/path/to/proxmox-mcp/.venv/bin/python /path/to/proxmox-mcp/scripts/snapshot_rotate.py \
-  --config /path/to/proxmox-mcp/proxmox-config/config.json
+.venv/bin/python scripts/snapshot_rotate.py \
+  --config proxmox-config/config.json
 ```
 
 Cron (hourly):
 ```
-0 * * * * /path/to/proxmox-mcp/.venv/bin/python /path/to/proxmox-mcp/scripts/snapshot_rotate.py \
-  --config /path/to/proxmox-mcp/proxmox-config/config.json
+0 * * * * cd /path/to/proxmox-mcp && .venv/bin/python scripts/snapshot_rotate.py \
+  --config proxmox-config/config.json
 ```
 
 ## 📦 Installation

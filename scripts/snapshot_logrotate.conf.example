@@ -1,0 +1,14 @@
+# Copy this file to snapshot_logrotate.conf and update paths
+# sudo cp snapshot_logrotate.conf.example /etc/logrotate.d/proxmox-snapshot
+
+/path/to/proxmox-mcp/logs/snapshot_rotate.log {
+  weekly
+  rotate 8
+  compress
+  delaycompress
+  missingok
+  notifempty
+  copytruncate
+  # Uncomment and set your user if needed:
+  # su $USER $USER
+}

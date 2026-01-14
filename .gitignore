@@ -59,3 +59,6 @@ coverage.xml
 
 # Local configuration
 config/config.json
+proxmox-config/config.json
+logs/
+scripts/snapshot_logrotate.conf
