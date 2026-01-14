@@ -129,6 +129,9 @@ def main() -> int:
     for vm in vms:
         if vm.get("template"):
             continue
+        if vm.get("type") and vm.get("type") != "qemu":
+            print(f"[warn] skipping non-QEMU vmid {vm.get('vmid')} type {vm.get('type')}")
+            continue
         vmid = str(vm.get("vmid"))
         node = vm.get("node")
         if not node:
