@@ -3,7 +3,7 @@
 import argparse
 import json
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from proxmoxer import ProxmoxAPI
 
 
@@ -26,7 +26,7 @@ def connect_proxmox(config: dict) -> ProxmoxAPI:
 
 
 def tag_snapshot_name(prefix: str) -> str:
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     if prefix == "hourly":
         return f"auto-hourly-{now:%Y%m%d-%H%M}"
     if prefix == "daily":
@@ -135,7 +135,7 @@ def main() -> int:
     config = load_config(args.config)
     proxmox = connect_proxmox(config)
 
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     cadences_to_create = should_create(now)
     cutoffs = retention_cutoffs(now)
 
