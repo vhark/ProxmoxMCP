@@ -28,22 +28,25 @@ def connect_proxmox(config: dict) -> ProxmoxAPI:
 def tag_snapshot_name(prefix: str) -> str:
     now = datetime.utcnow()
     if prefix == "hourly":
-        return f"auto/hourly/{now:%Y%m%d-%H%M}"
+        return f"auto-hourly-{now:%Y%m%d-%H%M}"
     if prefix == "daily":
-        return f"auto/daily/{now:%Y%m%d}"
+        return f"auto-daily-{now:%Y%m%d}"
     if prefix == "weekly":
-        return f"auto/weekly/{now:%Y%m%d}"
+        return f"auto-weekly-{now:%Y%m%d}"
     if prefix == "monthly":
-        return f"auto/monthly/{now:%Y%m%d}"
+        return f"auto-monthly-{now:%Y%m%d}"
     raise ValueError(f"Unknown prefix {prefix}")
 
 
 def parse_snapshot_timestamp(name: str) -> datetime | None:
     try:
-        parts = name.split("/")
-        if len(parts) != 3:
+        if not name.startswith("auto-"):
             return None
-        _, cadence, stamp = parts
+        parts = name.split("-")
+        if len(parts) < 3:
+            return None
+        cadence = parts[1]
+        stamp = "-".join(parts[2:])
         if cadence == "hourly":
             return datetime.strptime(stamp, "%Y%m%d-%H%M")
         return datetime.strptime(stamp, "%Y%m%d")
@@ -75,9 +78,9 @@ def filter_snapshots(snapshots: list[dict]) -> dict[str, list[dict]]:
     grouped: dict[str, list[dict]] = {"hourly": [], "daily": [], "weekly": [], "monthly": []}
     for snap in snapshots:
         name = snap.get("name", "")
-        if not name.startswith("auto/"):
+        if not name.startswith("auto-"):
             continue
-        parts = name.split("/")
+        parts = name.split("-")
         if len(parts) < 3:
             continue
         cadence = parts[1]
